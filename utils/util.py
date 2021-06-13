@@ -38,7 +38,7 @@ def extract_faces(path_images:str, path_cropped_images:str=None, output_image_si
     os.makedirs(path_cropped_images, exist_ok=True)
     
     # Extract faces
-    for file_name in os.path.listdir(path_images):
+    for file_name in os.listdir(path_images):
         file_path = os.path.join(path_images, file_name)
 
         # Extract face
