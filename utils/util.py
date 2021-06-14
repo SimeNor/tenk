@@ -2,6 +2,14 @@ from PIL import Image
 import numpy as np
 from mtcnn.mtcnn import MTCNN
 import os
+import datetime as dt
+
+
+def matlab2datetime(matlab_datenum):
+    day = dt.datetime.fromordinal(int(matlab_datenum))
+    dayfrac = dt.timedelta(days=matlab_datenum%1) - dt.timedelta(days=366)
+    return day + dayfrac
+
 
 def extract_face(file_name:str, output_size:tuple=None) -> None:
         
