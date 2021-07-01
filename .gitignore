@@ -1,1 +1,11 @@
 tenk_env
+imdb_crop/*
+cropped_imdb_images/*
+utils/load_s3.py
+.gitignore
+imdbFaces.zip
+utils/__pycache__/load_s3.cpython-36.pyc
+utils/__pycache__/util.cpython-36.pyc
+.gitignore
+utils/__pycache__/util.cpython-36.pyc
+utils/__pycache__/util.cpython-36.pyc
