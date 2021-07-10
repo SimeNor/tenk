@@ -4,6 +4,10 @@ from mtcnn.mtcnn import MTCNN
 import os
 import datetime as dt
 import time
+import cv2
+import math
+from matplotlib import pyplot as plt
+
 
 def matlab2datetime(matlab_datenum):
     day = dt.datetime.fromordinal(int(matlab_datenum))
@@ -11,25 +15,24 @@ def matlab2datetime(matlab_datenum):
     return day + dayfrac
 
 
-def extract_face(file_name:str, output_size:tuple=None) -> None:
-        
-	# Load image
+def extract_face(file_name: str, output_size: tuple = None) -> None:
+    # Load image
     img = Image.open(file_name)
     img_array = np.asarray(img)
     
     # Instantiate detector
     face_detector = MTCNN()
 
-	# Detect face
+    # Detect face
     results = face_detector.detect_faces(img_array)
     x1, y1, w, h = results[0]['box']
     x2 = x1 + w
     y2 = y1 + h
 
-	# Extract face
+    # Extract face
     face = img_array[y1:y2, x1:x2]
 
-	# Resize to shape
+    # Resize to shape
     if output_size is not None:
         image = Image.fromarray(face)
         image = image.resize(output_size)
@@ -38,7 +41,8 @@ def extract_face(file_name:str, output_size:tuple=None) -> None:
     else:
         return face
 
-def extract_faces(path_images:str, path_cropped_images:str=None, output_image_size:tuple=None) -> dict:
+
+def extract_faces(path_images:str, path_cropped_images: str=None, output_image_size: tuple=None) -> dict:
     # Create dict for holding images
     faces = {}
 
@@ -60,7 +64,11 @@ def extract_faces(path_images:str, path_cropped_images:str=None, output_image_si
             img = Image.fromarray(face)
             img.save(os.path.join(path_cropped_images, file_name))
 
-def extract_faces_paths(root_path:str, original_paths:list, path_cropped_images:str=None, output_image_size:tuple=None) -> dict:
+    return faces
+
+
+def extract_faces_paths(root_path: str, original_paths: list, path_cropped_images: str = None,
+                        output_image_size: tuple = None) -> dict:
     # Confirm path to store images to
     os.makedirs(path_cropped_images, exist_ok=True)
 
@@ -106,3 +114,24 @@ def extract_faces_paths(root_path:str, original_paths:list, path_cropped_images:
                     print(f"{counter}/{total} - ETA: {time.strftime('%H:%M:%S', time.gmtime(np.mean(logged_times) * (total - counter)))}")
         except:
             continue
+
+
+def display_random_images(metadata, num_images=6):
+    # create figure
+    fig = plt.figure(figsize=(15, 10))
+
+    # setting values to rows and column variables
+    rows = int(math.ceil(num_images / 2))
+    columns = 2
+    # reading images
+    sample = metadata.sample(n=num_images)
+    filenames = sample.full_path
+    celebs = sample.name
+    face_score = sample.celeb_names
+    # Adds a subplot at the 1st position
+    for i, filepath in enumerate(filenames):
+        fig.add_subplot(rows, columns, i + 1)
+        img = cv2.cvtColor(cv2.imread(f'imdb_crop/{filepath}'), cv2.COLOR_BGR2RGB)
+        plt.imshow(img)
+        plt.axis('off')
+        plt.title(f"{celebs.iloc[i]}, {face_score.iloc[i]}")
