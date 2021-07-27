@@ -154,6 +154,7 @@ def test_modell(modell, data):
 
 
 def generer_modellrepresentasjon(modell, datasett):
+    global device
 
     with open('_temp_.json', 'r') as f:
         temp = json.load(f)
@@ -180,7 +181,7 @@ def generer_modellrepresentasjon(modell, datasett):
 
     idx = 0
     for x, _ in data_loader:
-        y_pred = modell(x)
+        y_pred = modell(x.to(device))
 
         for emb in y_pred.cpu().detach().numpy():
             embeddings[datasett.imgs[idx][0]] = emb
