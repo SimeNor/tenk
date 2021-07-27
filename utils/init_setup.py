@@ -10,3 +10,5 @@ def setup():
 
     with open('_temp_.json', 'w') as f:
         json.dump(temp, f)
+
+    os.makedirs("dine_opplastninger", exist_ok=True)
