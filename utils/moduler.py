@@ -17,19 +17,6 @@ from IPython.display import display
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
-def setup() -> None:
-    """Funksjon for å sette opp Colab notebook.
-    """
-    warnings.filterwarnings('ignore')
-    os.system('pip install -r requirements.txt')
-    os.system('unzip cropped.zip && rm uncropped.zip')
-
-    temp = {'workers': 0 if os.name == 'nt' else 8}
-
-    with open('_temp_.json', 'w') as f:
-        json.dump(temp, f)
-
-
 def last_inn_bilder(lokasjon_bilder:str):
     trans = transforms.Compose([
         np.float32,
