@@ -2,7 +2,7 @@ import os, warnings, json
 
 warnings.filterwarnings('ignore')
 os.chdir("tenk")
-os.system('pip install -r requirements.txt')
+os.system('pip install -r utils/requirements.txt')
 os.system('unzip cropped.zip && rm uncropped.zip')
 
 temp = {'workers': 0 if os.name == 'nt' else 8}
