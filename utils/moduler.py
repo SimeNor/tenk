@@ -124,6 +124,8 @@ def tren_modell(modell, data, læringsrate:int, trenings_iterasjoner:int, test_d
 
     writer.close()
 
+    return modell
+
 
 def loss_metrics():
     loss_fn = torch.nn.CrossEntropyLoss()
