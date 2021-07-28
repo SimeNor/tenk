@@ -116,7 +116,9 @@ def tren_modell(modell, data, læringsrate:int, treningsiterasjoner:int, test_da
                 writer=writer
             )
 
-    return modell, (loss_fn, metrics, writer)
+    writer.close()
+
+    return modell
 
 
 def loss_metrics():
@@ -127,10 +129,13 @@ def loss_metrics():
     return loss_fn, metrics
 
 
-def test_modell(modell, _artifacts, data):
+def test_modell(modell, data):
     global device
 
-    loss_fn, metrics, writer = _artifacts
+    loss_fn, metrics = loss_metrics()
+
+    writer = SummaryWriter()
+    writer.iteration, writer.interval = 0, 1
 
     modell.eval()
     training.pass_epoch(
@@ -138,6 +143,8 @@ def test_modell(modell, _artifacts, data):
         batch_metrics=metrics, show_running=False, device=device,
         writer=writer
     )
+
+    writer.close()
 
 
 def generer_modellrepresentasjon(modell, datasett):
