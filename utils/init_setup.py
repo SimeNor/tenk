@@ -6,7 +6,7 @@ def setup():
     os.system('pip install -r utils/requirements.txt')
     os.system('unzip komp_kjendiser.zip')
 
-    temp = {'workers': 0 if os.name == 'nt' else 2}
+    temp = {'workers': 0 if os.name == 'nt' else 2, "kjendis_chache":"kjendis_cache.json"}
 
     with open('_temp_.json', 'w') as f:
         json.dump(temp, f)

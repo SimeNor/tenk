@@ -85,7 +85,7 @@ def last_ned_modell():
     return resnet
 
 def tren_modell(modell, data, læringsrate:int, treningsiterasjoner:int, test_data=None):
-    global device
+    global device, loss_fn, metrics, writer
 
     optimizer = optim.Adam(modell.parameters(), lr=læringsrate)
     scheduler = MultiStepLR(optimizer, [5, 10])
@@ -122,6 +122,7 @@ def tren_modell(modell, data, læringsrate:int, treningsiterasjoner:int, test_da
 
 
 def loss_metrics():
+    global loss_fn, metrics
     loss_fn = torch.nn.CrossEntropyLoss()
     metrics = {
         'Treffsikkerhet': training.accuracy
@@ -130,12 +131,7 @@ def loss_metrics():
 
 
 def test_modell(modell, data):
-    global device
-
-    loss_fn, metrics = loss_metrics()
-
-    writer = SummaryWriter()
-    writer.iteration, writer.interval = 0, 1
+    global device, loss_fn, metrics, writer
 
     modell.eval()
     training.pass_epoch(
@@ -175,7 +171,15 @@ def generer_modellrepresentasjon(modell, datasett):
 def beregn_likhet(modell, kjendis_datasett, dine_bilder, antall_mest_like:int=1):
     with open('_temp_.json', 'r') as f:
         temp = json.load(f)
-    modell_representasjon = generer_modellrepresentasjon(modell, kjendis_datasett)
+
+    try:
+        with open(temp["kjendis_chache"], 'r') as f:
+            kjendiser_representasjon = json.load(f)
+    except:
+        kjendiser_representasjon = generer_modellrepresentasjon(modell, kjendis_datasett)
+        with open(temp["kjendis_chache"], 'w') as f:
+            json.dump(kjendiser_representasjon, f)
+
     dine_representasjoner = generer_modellrepresentasjon(modell, dine_bilder)
 
     kjendiser = pd.read_csv("kjendiser.csv")
@@ -187,7 +191,7 @@ def beregn_likhet(modell, kjendis_datasett, dine_bilder, antall_mest_like:int=1)
     for idx1, e1 in dine_representasjoner.items():
         distances[idx1] = pd.DataFrame(columns=['ditt_bilde', 'kjendis_bilde', 'ulikhet', 'link'])
         
-        for idx2, e2 in modell_representasjon.items():
+        for idx2, e2 in kjendiser_representasjon.items():
             key = create_key([idx1, idx2])
             
             if key not in done:
@@ -274,7 +278,7 @@ def vis_resultater(resultater):
     for ditt_bilde, resultat in resultater.items():
         print("Ditt bilde:")
         vis_bilder([ditt_bilde])
-        print("Dine mest like kjendiser:\n\n")
+        print("Dine mest like kjendis:")
 
         for i in range(len(resultat)):
             row = resultat.iloc[i]
