@@ -44,7 +44,7 @@ def last_inn_bilder(lokasjon_bilder:str):
     return datasett
 
 
-def del_opp_datasett(datasett, andel_test:float, størrelse_treningsgrupper:int, ignore_print:bool=False):
+def del_opp_datasett(datasett, andel_test:float, størrelse_treningsgrupper:int=64, ignore_print:bool=False):
     with open('_temp_.json', 'r') as f:
         temp = json.load(f)
 
@@ -84,7 +84,7 @@ def last_ned_modell():
 
     return resnet
 
-def tren_modell(modell, data, læringsrate:int, trenings_iterasjoner:int, test_data=None):
+def tren_modell(modell, data, læringsrate:int, treningsiterasjoner:int, test_data=None):
     global device
 
     os.system('%load_ext tensorboard')
@@ -103,8 +103,8 @@ def tren_modell(modell, data, læringsrate:int, trenings_iterasjoner:int, test_d
 
     modell.eval()
 
-    for epoch in range(trenings_iterasjoner):
-        print('\nEpoch {}/{}'.format(epoch + 1, trenings_iterasjoner))
+    for epoch in range(treningsiterasjoner):
+        print('\nEpoch {}/{}'.format(epoch + 1, treningsiterasjoner))
         print('-' * 10)
 
         modell.train()
@@ -190,7 +190,7 @@ def generer_modellrepresentasjon(modell, datasett):
     return embeddings
 
 
-def beregn_likhet(modell, kjendis_datasett, dine_bilder):
+def beregn_likhet(modell, kjendis_datasett, dine_bilder, antall_mest_like:int=1):
     with open('_temp_.json', 'r') as f:
         temp = json.load(f)
     modell_representasjon = generer_modellrepresentasjon(modell, kjendis_datasett)
@@ -213,7 +213,7 @@ def beregn_likhet(modell, kjendis_datasett, dine_bilder):
                 distances[idx1] = distances[idx1].append({'ditt_bilde': idx1, 'kjendis_bilde': idx2, 'ulikhet':np.linalg.norm(e1 - e2), 'link': kjendis_link}, ignore_index=True)
                 done.append(key)
 
-        distances[idx1] = distances[idx1].sort_values(by="ulikhet").head(5)
+        distances[idx1] = distances[idx1].sort_values(by="ulikhet").head(antall_mest_like)
         distances[idx1] = distances[idx1].join(kjendiser, on="link")
         distances[idx1].drop("link", axis=1, inplace=True)
         
@@ -269,17 +269,24 @@ def finn_ansikter(lokasjon_bilder:str, path_cropped_images:str="dine_ansikter"):
     return path_cropped_images
 
 
-def vis_bilder(lokasjon_bilder):
+def vis_bilder(lokasjon_bilder, antall_bilder_totalt:int=None, antall_bilder_per_kjendis:int=None):
+    numb_images = 0
+    
     if lokasjon_bilder[-4:] in [".jpg", ".JPG"]:
         display(IMG(filename=lokasjon_bilder))
     elif type(lokasjon_bilder) is list:
-        for file_path in lokasjon_bilder:
+        for file_path in lokasjon_bilder[:antall_bilder_totalt]:
             display(IMG(filename=file_path))
     else:
         for folder, subs, files in os.walk(lokasjon_bilder):
             for file in files:
                 file_path = os.path.join(folder, file)
                 display(IMG(filename=file_path))
+                numb_images += 1
+                if (antall_bilder_per_kjendis is not None) and (numb_images >= antall_bilder_per_kjendis):
+                    break
+            if (antall_bilder_totalt is not None) and (numb_images >= antall_bilder_totalt):
+                    break
 
 def vis_resultater(resultater):
     for ditt_bilde, resultat in resultater.items():

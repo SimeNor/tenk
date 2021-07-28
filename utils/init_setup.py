@@ -4,7 +4,7 @@ def setup():
     warnings.filterwarnings('ignore')
     os.chdir("tenk")
     os.system('pip install -r utils/requirements.txt')
-    os.system('unzip cropped.zip && rm uncropped.zip')
+    os.system('unzip cropped.zip bilder_kjendiser')
 
     temp = {'workers': 0 if os.name == 'nt' else 2}
 
