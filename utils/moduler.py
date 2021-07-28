@@ -50,8 +50,8 @@ def del_opp_datasett(datasett, andel_test:float, størrelse_treningsgrupper:int=
 
     img_inds = np.arange(len(datasett))
     np.random.shuffle(img_inds)
-    train_inds = img_inds[:int(andel_test * len(img_inds))]
-    val_inds = img_inds[int(andel_test * len(img_inds)):]
+    train_inds = img_inds[:int((1-andel_test) * len(img_inds))]
+    val_inds = img_inds[int((1-andel_test) * len(img_inds)):]
     
     train_loader = DataLoader(
         datasett,
@@ -87,14 +87,8 @@ def last_ned_modell():
 def tren_modell(modell, data, læringsrate:int, treningsiterasjoner:int, test_data=None):
     global device
 
-    os.system('%load_ext tensorboard')
-    os.system('%tensorboard --logdir runs')
-
     optimizer = optim.Adam(modell.parameters(), lr=læringsrate)
     scheduler = MultiStepLR(optimizer, [5, 10])
-    
-    with open('_temp_.json', 'r') as f:
-        temp = json.load(f)
 
     loss_fn, metrics = loss_metrics()
 
