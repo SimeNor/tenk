@@ -153,22 +153,10 @@ def generer_modellrepresentasjon(modell, datasett):
     with open('_temp_.json', 'r') as f:
         temp = json.load(f)
 
-    if len(datasett) > 10:
-        img_inds = np.arange(len(datasett))
-        np.random.shuffle(img_inds)
-        inds = img_inds[:10]
-
-        data_loader = DataLoader(
-            datasett,
-            num_workers=temp['workers'],
-            batch_size=64,
-            sampler=SubsetRandomSampler(inds)
-        )
-    else:
-        data_loader = DataLoader(
-            datasett,
-            num_workers=temp['workers'],
-            batch_size=64)
+    data_loader = DataLoader(
+        datasett,
+        num_workers=temp['workers'],
+        batch_size=64)
 
     modell.eval()
     embeddings = {}
