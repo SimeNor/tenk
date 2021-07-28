@@ -85,7 +85,7 @@ def last_ned_modell():
     return resnet
 
 def tren_modell(modell, data, læringsrate:int, treningsiterasjoner:int, test_data=None):
-    global device, loss_fn, metrics, writer
+    global device
 
     optimizer = optim.Adam(modell.parameters(), lr=læringsrate)
     scheduler = MultiStepLR(optimizer, [5, 10])
@@ -116,13 +116,10 @@ def tren_modell(modell, data, læringsrate:int, treningsiterasjoner:int, test_da
                 writer=writer
             )
 
-    writer.close()
-
-    return modell
+    return modell, (loss_fn, metrics, writer)
 
 
 def loss_metrics():
-    global loss_fn, metrics
     loss_fn = torch.nn.CrossEntropyLoss()
     metrics = {
         'Treffsikkerhet': training.accuracy
@@ -130,8 +127,10 @@ def loss_metrics():
     return loss_fn, metrics
 
 
-def test_modell(modell, data):
-    global device, loss_fn, metrics, writer
+def test_modell(modell, _artifacts, data):
+    global device
+
+    loss_fn, metrics, writer = _artifacts
 
     modell.eval()
     training.pass_epoch(
@@ -139,8 +138,6 @@ def test_modell(modell, data):
         batch_metrics=metrics, show_running=False, device=device,
         writer=writer
     )
-
-    writer.close()
 
 
 def generer_modellrepresentasjon(modell, datasett):
