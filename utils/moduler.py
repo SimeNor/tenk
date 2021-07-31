@@ -75,10 +75,14 @@ def del_opp_datasett(datasett, andel_test:float, størrelse_treningsgrupper:int=
 def last_ned_modell():
     global device
 
+    with open('_temp_.json', 'r') as f:
+        temp = json.load(f)
+
     print("Laster ned modell..")
     resnet = InceptionResnetV1(
         classify=True,
         pretrained='vggface2',
+        num_classes=temp["num_classes"]
     ).to(device)
     print("Modell klar.")
 
@@ -145,6 +149,36 @@ def test_modell(modell, data):
     )
 
     writer.close()
+
+
+def finn_kjendis(modell, datasett):
+    global device
+
+    with open('_temp_.json', 'r') as f:
+        temp = json.load(f)
+
+    data_loader = DataLoader(
+        datasett,
+        num_workers=temp['workers'],
+        batch_size=64)
+
+    kjendiser = pd.read_csv("kjendiser.csv")
+    kjendiser.set_index("kjendis_id", inplace=True)
+    kjendiser = kjendiser[['navn','kjønn']].drop_duplicates()
+    
+    preds = []
+    
+
+    for i_batch, x in enumerate(data_loader):
+        x = x.to(device)
+        y_pred = modell(x)
+
+        preds.append(datasett.idx_to_class[y_pred])
+
+    results = pd.DataFrame(preds, columns=['kjendis_id'])
+    results = results.join(kjendiser, on="kjendis_id")
+
+    return results
 
 
 def generer_modellrepresentasjon(modell, datasett):
@@ -222,7 +256,7 @@ def extract_face(file_name: str, save_path:str) -> np.array:
     # Instantiate detector
     face_detector = MTCNN(
         image_size=160, margin=5, min_face_size=20,
-        thresholds=[0.7, 0.8, 0.8], factor=0.709, post_process=True,
+        thresholds=[0.8, 0.9, 0.9], factor=0.709, post_process=True,
         device=device
         )
     
