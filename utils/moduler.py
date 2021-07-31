@@ -203,7 +203,7 @@ def generer_modellrepresentasjon(modell, datasett):
     data_loader = DataLoader(
         datasett,
         num_workers=temp['workers'],
-        batch_size=1)
+        batch_size=16)
 
     modell.eval()
     embeddings =  []
@@ -215,9 +215,9 @@ def generer_modellrepresentasjon(modell, datasett):
     for x, _ in data_loader:
         y_pred = modell(x.to(device))
 
-        for emb in y_pred.cpu().detach():
+        for index, y in enumerate(y_pred.cpu().detach()):
             indices.append(datasett.imgs[idx][0])
-            embeddings.append(activation['emb'])
+            embeddings.append(activation['emb'][index])
             idx += 1
 
     return indices, torch.stack(embeddings)
