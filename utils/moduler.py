@@ -159,55 +159,54 @@ def generer_modellrepresentasjon(modell, datasett):
         batch_size=64)
 
     modell.eval()
-    embeddings = {}
+    embeddings =  []
+    indices =  []
 
     idx = 0
     for x, _ in data_loader:
         y_pred = modell(x.to(device))
 
-        for emb in y_pred.cpu().detach().numpy():
-            embeddings[datasett.imgs[idx][0]] = emb
+        for emb in y_pred.cpu().detach():
+            indices.append(datasett.imgs[idx][0])
+            embeddings.append(emb)
             idx += 1
 
-    return embeddings
+    return indices, torch.stack(embeddings)
 
 
 def beregn_likhet(modell, kjendis_datasett, dine_bilder, antall_mest_like:int=1):
+    print(f'Finner kjendis for {len(dine_bilder)} bilder.')
+
     with open('_temp_.json', 'r') as f:
         temp = json.load(f)
 
-    try:
-        with open(temp["kjendis_chache"], 'r') as f:
-            kjendiser_representasjon = json.load(f)
-    except:
-        kjendiser_representasjon = generer_modellrepresentasjon(modell, kjendis_datasett)
-        with open(temp["kjendis_chache"], 'w') as f:
-            json.dump(kjendiser_representasjon, f)
-
-    dine_representasjoner = generer_modellrepresentasjon(modell, dine_bilder)
+    kjendis_lokasjoner, kjendiser_representasjon = generer_modellrepresentasjon(modell, kjendis_datasett)
+    dine_bilder_lokasjoner, dine_representasjoner = generer_modellrepresentasjon(modell, dine_bilder)
 
     kjendiser = pd.read_csv("kjendiser.csv")
     kjendiser.set_index("fil_lokasjon", inplace=True)
 
     distances = {}
-    done = []
 
-    for idx1, e1 in dine_representasjoner.items():
+    for i_1, e1 in enumerate(dine_representasjoner):
+        idx1 = dine_bilder_lokasjoner[i_1]
+
         distances[idx1] = pd.DataFrame(columns=['ditt_bilde', 'kjendis_bilde', 'ulikhet', 'link'])
-        
-        for idx2, e2 in kjendiser_representasjon.items():
-            key = create_key([idx1, idx2])
-            
-            if key not in done:
-                kjendis_link = idx2.split(temp["kjendisbilder_lokasjon"])[-1][1:]
-                distances[idx1] = distances[idx1].append({'ditt_bilde': idx1, 'kjendis_bilde': idx2, 'ulikhet':np.linalg.norm(e1 - e2), 'link': kjendis_link}, ignore_index=True)
-                done.append(key)
 
+        e1_tensor = e1.repeat(len(kjendiser_representasjon), 1)
+
+        distances[idx1]['ulikhet'] = np.array(torch.norm(e1_tensor.to(device) - kjendiser_representasjon.to(device), 2, dim=1).cpu())
+        distances[idx1]['kjendis_bilde'] = kjendis_lokasjoner
         distances[idx1] = distances[idx1].sort_values(by="ulikhet").head(antall_mest_like)
+        distances[idx1]['link'] = distances[idx1]['kjendis_bilde']
+        distances[idx1]['link'] = distances[idx1]['link'].apply(lambda x: x.split(temp["kjendisbilder_lokasjon"])[-1][1:])
+        distances[idx1]['ditt_bilde'] = idx1
         distances[idx1] = distances[idx1].join(kjendiser, on="link")
         distances[idx1].drop("link", axis=1, inplace=True)
         
+        print(f'Funnet likhet for {i_1 + 1}/{len(dine_representasjoner)}.')
     return distances
+
 
 def create_key(idxs):
     idxs.sort()
