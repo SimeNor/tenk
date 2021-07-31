@@ -2,6 +2,7 @@ import os
 import warnings
 from facenet_pytorch import MTCNN, InceptionResnetV1, fixed_image_standardization, training
 import torch
+import torch.nn.functional as F
 from torch.utils.data import DataLoader, SubsetRandomSampler
 from torch import optim
 from torch.optim.lr_scheduler import MultiStepLR
@@ -35,6 +36,7 @@ def last_inn_bilder(lokasjon_bilder:str):
     except KeyError:
         temp["kjendisbilder_lokasjon"] = lokasjon_bilder
     datasett.idx_to_class = {i:c for c, i in datasett.class_to_idx.items()}
+    temp["idx_to_class"] = datasett.idx_to_class
     
     with open('_temp_.json', 'w') as f:
         json.dump(temp, f)
@@ -160,26 +162,37 @@ def finn_kjendis(modell, datasett):
     data_loader = DataLoader(
         datasett,
         num_workers=temp['workers'],
-        batch_size=64)
+        batch_size=16)
 
     kjendiser = pd.read_csv("kjendiser.csv")
     kjendiser.set_index("kjendis_id", inplace=True)
     kjendiser = kjendiser[['navn','kjønn']].drop_duplicates()
     
     preds = []
-    
 
-    for i_batch, x in enumerate(data_loader):
+    for i_batch, (x, y) in enumerate(data_loader):
         x = x.to(device)
-        y_pred = modell(x)
-
-        preds.append(datasett.idx_to_class[y_pred])
+        y_raw = modell(x)
+        preds = torch.argmax(F.softmax(y_raw, dim=0), dim=1).detach().cpu().numpy()
 
     results = pd.DataFrame(preds, columns=['kjendis_id'])
+    results['kjendis_id'] = results['kjendis_id'].apply(lambda x: int(temp["idx_to_class"][str(x)]))
     results = results.join(kjendiser, on="kjendis_id")
 
+    for idx, (img_loc, cls) in enumerate(datasett.imgs):
+        print("Ditt bilde:")
+        vis_bilder([img_loc])
+        print(f'Din kjendis: {results.iloc[idx]["navn"]}\n')
+    
     return results
 
+
+activation = {}
+
+def get_activation(name):
+        def hook(model, input, output):
+            activation[name] = output.detach()
+        return hook
 
 def generer_modellrepresentasjon(modell, datasett):
     global device
@@ -190,11 +203,13 @@ def generer_modellrepresentasjon(modell, datasett):
     data_loader = DataLoader(
         datasett,
         num_workers=temp['workers'],
-        batch_size=64)
+        batch_size=1)
 
     modell.eval()
     embeddings =  []
     indices =  []
+
+    modell.last_linear.register_forward_hook(get_activation('emb'))
 
     idx = 0
     for x, _ in data_loader:
@@ -202,7 +217,7 @@ def generer_modellrepresentasjon(modell, datasett):
 
         for emb in y_pred.cpu().detach():
             indices.append(datasett.imgs[idx][0])
-            embeddings.append(emb)
+            embeddings.append(activation['emb'])
             idx += 1
 
     return indices, torch.stack(embeddings)
