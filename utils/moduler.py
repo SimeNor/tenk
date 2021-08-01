@@ -226,7 +226,7 @@ def generer_modellrepresentasjon(modell, datasett):
     return indices, torch.vstack(embeddings)
 
 
-def beregn_likhet(modell, kjendis_datasett, dine_bilder, antall_mest_like:int=1):
+def beregn_likhet(modell, kjendis_datasett, dine_bilder, antall_mest_like:int=1, women:bool=True):
     print(f'Finner kjendis for {len(dine_bilder)} bilder.')
 
     with open('_temp_.json', 'r') as f:
@@ -250,11 +250,14 @@ def beregn_likhet(modell, kjendis_datasett, dine_bilder, antall_mest_like:int=1)
 
         distances[idx1]['ulikhet'] = np.array(torch.norm(e1_tensor.to(device) - kjendiser_representasjon.to(device), 2, dim=1).cpu())
         distances[idx1]['kjendis_bilde'] = kjendis_lokasjoner
-        distances[idx1] = distances[idx1].sort_values(by="ulikhet").head(antall_mest_like)
         distances[idx1]['link'] = distances[idx1]['kjendis_bilde']
         distances[idx1]['link'] = distances[idx1]['link'].apply(lambda x: x.split(temp["kjendisbilder_lokasjon"])[-1][1:])
         distances[idx1]['ditt_bilde'] = idx1
         distances[idx1] = distances[idx1].join(kjendiser, on="link")
+        if women:
+            distances[idx1] = distances[idx1][distances[idx1]["kjønn"] == "dame"].sort_values(by="ulikhet").head(antall_mest_like)
+        else:
+            distances[idx1] = distances[idx1].sort_values(by="ulikhet").head(antall_mest_like)
         distances[idx1].drop(["link", "Unnamed: 0"], axis=1, inplace=True)
 
         resultater = resultater.append(distances[idx1])
