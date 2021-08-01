@@ -191,6 +191,8 @@ activation = {}
 
 def get_activation(name):
         def hook(model, input, output):
+            global activation
+
             activation[name] = output.detach()
         return hook
 
@@ -203,7 +205,7 @@ def generer_modellrepresentasjon(modell, datasett):
     data_loader = DataLoader(
         datasett,
         num_workers=temp['workers'],
-        batch_size=16)
+        batch_size=64)
 
     modell.eval()
     embeddings =  []
@@ -212,15 +214,16 @@ def generer_modellrepresentasjon(modell, datasett):
     modell.last_linear.register_forward_hook(get_activation('emb'))
 
     idx = 0
-    for x, _ in data_loader:
+    embeddings = []
+    for index, (x, _) in enumerate(data_loader):
         y_pred = modell(x.to(device))
+        
+        indices += [x[0] for x in datasett.imgs[idx:idx+len(y_pred)]]
+        embeddings.append(activation['emb'].cpu().detach())
+        
+        idx += len(y_pred)
 
-        for index, y in enumerate(y_pred.cpu().detach()):
-            indices.append(datasett.imgs[idx][0])
-            embeddings.append(activation['emb'][index])
-            idx += 1
-
-    return indices, torch.stack(embeddings)
+    return indices, torch.vstack(embeddings)
 
 
 def beregn_likhet(modell, kjendis_datasett, dine_bilder, antall_mest_like:int=1):
@@ -236,6 +239,7 @@ def beregn_likhet(modell, kjendis_datasett, dine_bilder, antall_mest_like:int=1)
     kjendiser.set_index("fil_lokasjon", inplace=True)
 
     distances = {}
+    resultater = pd.DataFrame()
 
     for i_1, e1 in enumerate(dine_representasjoner):
         idx1 = dine_bilder_lokasjoner[i_1]
@@ -251,10 +255,15 @@ def beregn_likhet(modell, kjendis_datasett, dine_bilder, antall_mest_like:int=1)
         distances[idx1]['link'] = distances[idx1]['link'].apply(lambda x: x.split(temp["kjendisbilder_lokasjon"])[-1][1:])
         distances[idx1]['ditt_bilde'] = idx1
         distances[idx1] = distances[idx1].join(kjendiser, on="link")
-        distances[idx1].drop("link", axis=1, inplace=True)
+        distances[idx1].drop(["link", "Unnamed: 0"], axis=1, inplace=True)
+
+        resultater = resultater.append(distances[idx1])
         
         print(f'Funnet likhet for {i_1 + 1}/{len(dine_representasjoner)}.')
-    return distances
+
+    del distances
+
+    return resultater
 
 
 def create_key(idxs):
@@ -327,13 +336,11 @@ def vis_bilder(lokasjon_bilder, antall_bilder_totalt:int=None, antall_bilder_per
                     break
 
 def vis_resultater(resultater):
-    for ditt_bilde, resultat in resultater.items():
+    for i in range(len(resultater)):
+        row = resultater.iloc[i]
         print("Ditt bilde:")
-        vis_bilder([ditt_bilde])
+        vis_bilder([row["ditt_bilde"]])
         print("Dine mest like kjendis:")
-
-        for i in range(len(resultat)):
-            row = resultat.iloc[i]
-            print(f'{row["navn"]} - Ulikhet: {row["ulikhet"]}')
-            vis_bilder([row["kjendis_bilde"]])
-            print('\n\n')
+        print(f'{row["navn"]}({row["bilde_år"]}) - Ulikhet: {row["ulikhet"]}')
+        vis_bilder([row["kjendis_bilde"]])
+        print('\n\n')
