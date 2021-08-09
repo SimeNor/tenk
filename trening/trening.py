@@ -3,7 +3,6 @@ from torch import optim
 import numpy as np
 import time
 from facenet_pytorch import training
-from utils.moduler import loss_metrics
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
@@ -118,3 +117,11 @@ def tren_modell(modell, trening_data, læringsrate:float, treningsiterasjoner:in
         #######################################################################################
 
     return modell
+
+
+def loss_metrics():
+    loss_fn = torch.nn.CrossEntropyLoss()
+    metrics = {
+        'Treffsikkerhet': training.accuracy
+    }
+    return loss_fn, metrics
