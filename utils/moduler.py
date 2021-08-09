@@ -293,8 +293,6 @@ def extract_face(file_name: str, save_path:str) -> np.array:
     elif exif[orientation] == 8:
         img=img.rotate(90, expand=True)
 
-    img.show()
-
     # Instantiate detector
     face_detector = MTCNN(
         image_size=160, margin=5, min_face_size=20,
