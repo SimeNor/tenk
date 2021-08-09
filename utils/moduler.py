@@ -74,19 +74,19 @@ def del_opp_datasett(datasett, andel_test:float, størrelse_treningsgrupper:int=
 
     return train_loader, val_loader
 
-def last_ned_modell():
+def last_ned_modell(vis_fremgang:bool=True):
     global device
 
     with open('_temp_.json', 'r') as f:
         temp = json.load(f)
-
-    print("Laster ned modell..")
+    
+    if vis_fremgang: print("Laster ned modell..")
     resnet = InceptionResnetV1(
         classify=True,
         pretrained='vggface2',
         num_classes=temp["num_classes"]
     ).to(device)
-    print("Modell klar.")
+    if vis_fremgang: print("Modell klar.")
 
     return resnet
 
@@ -228,7 +228,7 @@ def generer_modellrepresentasjon(modell, datasett):
 
 def beregn_likhet(kjendis_datasett, dine_bilder, antall_mest_like:int=1, women:bool=True):
     print(f'Finner kjendis for {len(dine_bilder)} bilder.')
-    modell = last_ned_modell()
+    modell = last_ned_modell(vis_fremgang=False)
 
     with open('_temp_.json', 'r') as f:
         temp = json.load(f)
