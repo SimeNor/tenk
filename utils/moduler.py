@@ -226,8 +226,9 @@ def generer_modellrepresentasjon(modell, datasett):
     return indices, torch.vstack(embeddings)
 
 
-def beregn_likhet(modell, kjendis_datasett, dine_bilder, antall_mest_like:int=1, women:bool=True):
+def beregn_likhet(kjendis_datasett, dine_bilder, antall_mest_like:int=1, women:bool=True):
     print(f'Finner kjendis for {len(dine_bilder)} bilder.')
+    modell = last_ned_modell()
 
     with open('_temp_.json', 'r') as f:
         temp = json.load(f)
