@@ -12,7 +12,7 @@ import numpy as np
 import os
 import json
 import pandas as pd
-from PIL import Image
+from PIL import Image, ExifTags
 from IPython.display import Image as IMG
 from IPython.display import display
 
@@ -277,31 +277,33 @@ def create_key(idxs):
 
 def extract_face(file_name: str, save_path:str) -> np.array:
     global device
-
+    
     # Load image
-    img = Image.open(file_name)
+    img=Image.open(file_name)
+    for orientation in ExifTags.TAGS.keys():
+        if ExifTags.TAGS[orientation]=='Orientation':
+            break
+        
+        exif=dict(img._getexif().items())
+    
+    if exif[orientation] == 3:
+        img=img.rotate(180, expand=True)
+    elif exif[orientation] == 6:
+        img=img.rotate(270, expand=True)
+    elif exif[orientation] == 8:
+        img=img.rotate(90, expand=True)
+
+    img.show()
 
     # Instantiate detector
     face_detector = MTCNN(
         image_size=160, margin=5, min_face_size=20,
-        thresholds=[0.8, 0.9, 0.9], factor=0.709, post_process=True,
+        thresholds=[0.6, 0.7, 0.7], factor=0.709, post_process=True,
         device=device
         )
     
-    face = face_detector(img, save_path=save_path)
-    if face is None:
-        rot_img = img.rotate(-90)
-        face = face_detector(rot_img, save_path=save_path)
-
-    if face is None:
-        rot_img = img.rotate(-90)
-        face = face_detector(rot_img, save_path=save_path)
-    if face is None:
-        rot_img = img.rotate(-90)
-        face = face_detector(rot_img, save_path=save_path)
-
     # Detect face
-    return face
+    return face_detector(img, save_path=save_path)
 
 
 def finn_ansikter(lokasjon_bilder:str, path_cropped_images:str="dine_ansikter"):
