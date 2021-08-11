@@ -279,29 +279,34 @@ def extract_face(file_name: str, save_path:str) -> np.array:
     global device
     
     # Load image
-    img=Image.open(file_name)
+    img = Image.open(file_name)
     for orientation in ExifTags.TAGS.keys():
-        if ExifTags.TAGS[orientation]=='Orientation':
+        if ExifTags.TAGS[orientation] == 'Orientation':
             break
         
-        exif=dict(img._getexif().items())
+    exif = dict(img._getexif().items())
     
     if exif[orientation] == 3:
-        img=img.rotate(180, expand=True)
+        img = img.rotate(180, expand=True)
     elif exif[orientation] == 6:
-        img=img.rotate(270, expand=True)
+        img = img.rotate(270, expand=True)
     elif exif[orientation] == 8:
-        img=img.rotate(90, expand=True)
+        img = img.rotate(90, expand=True)
 
     # Instantiate detector
     face_detector = MTCNN(
         image_size=160, margin=5, min_face_size=20,
-        thresholds=[0.6, 0.7, 0.7], factor=0.709, post_process=True,
-        device=device
+        thresholds=[0.0, 0.0, 0.0], factor=0.709, post_process=True,
+        selection_method="probability", device=device
         )
     
     # Detect face
-    return face_detector(img, save_path=save_path)
+    cropped_img = face_detector(img, save_path=save_path)
+
+    if cropped_img is not None:
+        return cropped_img
+    else:
+        return np.array(img.resize((160, 160)), np.int8)
 
 
 def finn_ansikter(lokasjon_bilder:str, path_cropped_images:str="dine_ansikter"):
