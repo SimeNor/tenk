@@ -123,14 +123,6 @@ def tren_modell(modell, data, læringsrate:int, treningsiterasjoner:int, test_da
     return modell
 
 
-def loss_metrics():
-    loss_fn = torch.nn.CrossEntropyLoss()
-    metrics = {
-        'Treffsikkerhet': training.accuracy
-    }
-    return loss_fn, metrics
-
-
 def test_modell(modell, data):
     global device
 
@@ -332,3 +324,26 @@ def vis_resultater(resultater):
         print(f'{row["navn"]}({row["bilde_år"]}) - Ulikhet: {row["ulikhet"]}')
         vis_bilder([row["kjendis_bilde"]])
         print('\n\n')
+
+
+def generer_prediksjoner(model, x):
+    y_pred = model(x)
+    return y_pred
+
+
+def sammenlign_med_fakta(y, y_pred, loss_fn):
+    return loss_fn(y_pred, y)
+
+
+def oppdater_modell(loss_batch, optimizer):
+    loss_batch.backward()
+    optimizer.step()
+    optimizer.zero_grad()
+
+
+def loss_metrics():
+    loss_fn = torch.nn.CrossEntropyLoss()
+    metrics = {
+        'Treffsikkerhet': training.accuracy
+    }
+    return loss_fn, metrics
