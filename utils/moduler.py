@@ -12,7 +12,7 @@ import numpy as np
 import os
 import json
 import pandas as pd
-from PIL import Image, ExifTags
+from PIL import Image, ExifTags, ImageOps
 from IPython.display import Image as IMG
 from IPython.display import display
 
