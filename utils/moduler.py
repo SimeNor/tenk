@@ -31,10 +31,6 @@ def last_inn_bilder(lokasjon_bilder:str):
         temp = json.load(f)
     
     temp["num_classes"] = len(datasett.class_to_idx)
-    try:
-        _ = temp["kjendisbilder_lokasjon"]
-    except KeyError:
-        temp["kjendisbilder_lokasjon"] = lokasjon_bilder
     datasett.idx_to_class = {i:c for c, i in datasett.class_to_idx.items()}
     temp["idx_to_class"] = datasett.idx_to_class
     
@@ -251,8 +247,7 @@ def beregn_likhet(kjendis_datasett, dine_bilder, antall_mest_like:int=1, women:b
 
         distances[idx1]['ulikhet'] = np.array(torch.norm(e1_tensor.to(device) - kjendiser_representasjon.to(device), 2, dim=1).cpu())
         distances[idx1]['kjendis_bilde'] = kjendis_lokasjoner
-        distances[idx1]['link'] = distances[idx1]['kjendis_bilde']
-        distances[idx1]['link'] = distances[idx1]['link'].apply(lambda x: x.split(temp["kjendisbilder_lokasjon"])[-1][1:])
+        distances[idx1]['link'] = distances[idx1]['kjendis_bilde'].apply(lambda x: x.split(temp["kjendisbilder_lokasjon"])[-1][1:])
         distances[idx1]['ditt_bilde'] = idx1
         distances[idx1] = distances[idx1].join(kjendiser, on="link")
         if women:

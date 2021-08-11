@@ -10,7 +10,7 @@ def setup(seed:int=42):
     torch.manual_seed(seed+1)
     numpy.random.seed(seed+2)
 
-    temp = {'workers': 0 if os.name == 'nt' else 2, "kjendis_chache":"kjendis_cache.json"}
+    temp = {'workers': 0 if os.name == 'nt' else 2, "kjendisbilder_lokasjon":"bilder_kjendiser"}
 
     with open('_temp_.json', 'w') as f:
         json.dump(temp, f)
