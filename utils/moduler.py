@@ -279,6 +279,9 @@ def extract_face(file_name: str, save_path:str) -> np.array:
     global device
     
     # Load image
+    img = Image.open(file_name).convert("RGB")
+    img = ImageOps.exif_transpose(img)
+    """
     img = Image.open(file_name)
     for orientation in ExifTags.TAGS.keys():
         if ExifTags.TAGS[orientation] == 'Orientation':
@@ -292,7 +295,7 @@ def extract_face(file_name: str, save_path:str) -> np.array:
         img = img.rotate(270, expand=True)
     elif exif[orientation] == 8:
         img = img.rotate(90, expand=True)
-
+    """
     # Instantiate detector
     face_detector = MTCNN(
         image_size=160, margin=5, min_face_size=20,
