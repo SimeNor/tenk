@@ -266,18 +266,28 @@ def extract_face(file_name: str, save_path:str) -> np.array:
     global device
     
     # Load image
-    img=Image.open(file_name).convert("RGB")
+    img = Image.open(file_name).convert("RGB")
     img = ImageOps.exif_transpose(img)
 
     # Instantiate detector
     face_detector = MTCNN(
         image_size=160, margin=5, min_face_size=20,
-        thresholds=[0.6, 0.7, 0.7], factor=0.709, post_process=True,
-        device=device
+        thresholds=[0.0, 0.0, 0.0], factor=0.709, post_process=True,
+        selection_method="probability", device=device
         )
     
     # Detect face
-    return face_detector(img, save_path=save_path)
+
+    cropped_img = face_detector(img, save_path=save_path)
+
+    if cropped_img is not None:
+        return cropped_img
+    else:
+        reimg = img.resize((160, 160))
+        if save_path is not None:
+            os.makedirs(os.path.dirname(save_path) + "/", exist_ok=True)
+            img.save(save_path)
+        return np.array(reimg, np.int8)
 
 
 def finn_ansikter(lokasjon_bilder:str, path_cropped_images:str="dine_ansikter"):
