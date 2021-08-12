@@ -272,7 +272,7 @@ def extract_face(file_name: str, save_path:str) -> np.array:
     # Instantiate detector
     face_detector = MTCNN(
         image_size=160, margin=5, min_face_size=20,
-        thresholds=[0.0, 0.0, 0.0], factor=0.709, post_process=True,
+        thresholds=[0.1, 0.1, 0.1], factor=0.709, post_process=True,
         selection_method="probability", device=device
         )
     
